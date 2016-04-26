@@ -1,5 +1,6 @@
 package szilard
 
+import com.typesafe.scalalogging.LazyLogging
 import org.jsoup.Jsoup
 
 import collection.JavaConversions._
@@ -9,7 +10,7 @@ import scala.util.Try
 /**
   * Created by szilard on 2016.04.22..
   */
-object Main extends App {
+object Main extends App with LazyLogging {
   val checkInterval = 60000
 
   def getAds: List[String] = {
@@ -64,38 +65,33 @@ object Main extends App {
     usefulRows.map(e => e.attr("adid")).toList
   }
 
-  println("Initializing known ads...")
+  logger.info("Initializing known ads...")
 
   val knownAds: ListBuffer[String] = new ListBuffer[String]()
   val initialAds = Try(getAds).orElse(Try(getAds))
   if (initialAds.isSuccess) {
     initialAds.get.foreach(knownAds += _)
 
-    println(s"Initial known ads list is ready, checking for new ones in every ${checkInterval / 1000} seconds...")
+    logger.info(s"Initial ads list is ready, checking for new ones in every ${checkInterval / 1000} seconds...")
 
     while (true) {
       Thread.sleep(checkInterval)
-      val newAds: ListBuffer[String] = new ListBuffer[String]()
 
       val result = Try(getAds) orElse(Try(getAds))
       if (result.isSuccess) {
         result.get.foreach {
           newAd =>
             if (!knownAds.contains(newAd)) {
-              println(s"\nNew ad found: $newAd")
+              logger.info(s"\nNew ad found: $newAd")
               knownAds += newAd
-              newAds += newAd
             }
         }
       } else {
-        println("\nCannot connet to server...")
+        logger.error("\nCannot connet to server...")
       }
-
-      if (newAds.size == 0)
-        print(".")
     }
   } else {
-    println("Cannot connet to server...")
+    logger.error("Cannot connet to server...")
   }
 
 }
