@@ -77,7 +77,7 @@ object Main extends App {
       Thread.sleep(checkInterval)
       val newAds: ListBuffer[String] = new ListBuffer[String]()
 
-      val result = Try(getAds)
+      val result = Try(getAds) orElse(Try(getAds))
       if (result.isSuccess) {
         result.get.foreach {
           newAd =>
