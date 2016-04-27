@@ -15,7 +15,7 @@ object Main extends App with LazyLogging {
 
   def getAds: List[String] = {
 
-    val mainStite = Jsoup.connect("https://www.wg-gesucht.de/en/wg-zimmer-in-Berlin.8.0.0.0.html").execute()
+    val mainStite = Jsoup.connect("https://www.wg-gesucht.de/en/wg-zimmer-in-Berlin.8.0.0.0.html").timeout(10000).execute()
 
     val document = Jsoup.connect("https://www.wg-gesucht.de/en/wg-zimmer-in-Berlin.8.0.0.0.html")
       .data("filterID", "")
@@ -56,6 +56,7 @@ object Main extends App with LazyLogging {
       .data("haustier", "0")
       .data("moebliert", "0")
       .cookies(mainStite.cookies())
+      .timeout(10000)
       .post()
 
     val tbody = document.getElementById("table-compact-list").getElementsByTag("tbody")
@@ -68,7 +69,7 @@ object Main extends App with LazyLogging {
   logger.info("Initializing known ads...")
 
   val knownAds: ListBuffer[String] = new ListBuffer[String]()
-  val initialAds = Try(getAds).orElse(Try(getAds))
+  val initialAds = Try(getAds)
   if (initialAds.isSuccess) {
     initialAds.get.foreach(knownAds += _)
 
@@ -77,7 +78,7 @@ object Main extends App with LazyLogging {
     while (true) {
       Thread.sleep(checkInterval)
 
-      val result = Try(getAds) orElse(Try(getAds))
+      val result = Try(getAds)
       if (result.isSuccess) {
         result.get.foreach {
           newAd =>
@@ -87,11 +88,12 @@ object Main extends App with LazyLogging {
             }
         }
       } else {
-        logger.error("\nCannot connet to server...")
+        logger.error("\nCannot connet to server...", result.get)
       }
+
     }
   } else {
-    logger.error("Cannot connet to server...")
+    logger.error("Cannot connet to server...", initialAds.get)
   }
 
 }
